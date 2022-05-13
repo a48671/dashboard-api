@@ -1,11 +1,16 @@
 import { BaseController } from '../common/base.controller';
-import { LoggerService } from '../logger/logger.service';
 import { NextFunction, Request, Response } from 'express';
 import { HTTPError } from '../errors/http-error.class';
+import { ILogger } from '../logger/logger.interface';
+import 'reflect-metadata';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '../types';
+import { IUsersController } from './users.controller.interface';
 
-export class UsersController extends BaseController {
-  constructor(logger: LoggerService) {
-    super(logger);
+@injectable()
+export class UsersController extends BaseController implements IUsersController {
+  constructor(@inject(TYPES.ILogger) private loggerService: ILogger) {
+    super(loggerService);
 
     this.bindRoutes([
       { method: 'post', path: '/login', func: this.login },
@@ -15,7 +20,6 @@ export class UsersController extends BaseController {
 
   login(req: Request, res: Response, next: NextFunction) {
     next(new HTTPError(401, 'Error of auth'));
-    // this.ok<string>(res, 'login');
   }
 
   register(req: Request, res: Response) {
