@@ -1,6 +1,10 @@
+import { IUsersController } from './users/users.controller.interface';
+import { IUsersService } from './users/users.service.interface';
+
 export const TYPES = {
 	Application: Symbol.for('Application'),
 	IExceptionFilter: Symbol.for('IExceptionFilter'),
-	UsersController: Symbol.for('UsersController'),
+	IUsersController: Symbol.for('IUsersController'),
+	IUsersService: Symbol.for('IUsersService'),
 	ILogger: Symbol.for('ILogger'),
 };

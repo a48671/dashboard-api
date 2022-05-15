@@ -7,6 +7,8 @@ import { inject, injectable } from 'inversify';
 import 'reflect-metadata';
 import { TYPES } from './types';
 import { IExceptionFilter } from './errors/exception.filter.interface';
+import { json } from 'body-parser';
+import { IUsersController } from './users/users.controller.interface';
 
 @injectable()
 export class App {
@@ -16,11 +18,15 @@ export class App {
 
 	constructor(
 		@inject(TYPES.ILogger) private logger: ILogger,
-		@inject(TYPES.UsersController) private usersController: UsersController,
+		@inject(TYPES.IUsersController) private usersController: IUsersController,
 		@inject(TYPES.IExceptionFilter) private exceptionFilter: IExceptionFilter,
 	) {
 		this.app = express();
 		this.port = 8000;
+	}
+
+	useMiddleware(): void {
+		this.app.use(json());
 	}
 
 	useRoutes(): void {
@@ -32,6 +38,7 @@ export class App {
 	}
 
 	init(): void {
+		this.useMiddleware();
 		this.useRoutes();
 		this.useExceptionFilter();
 		this.server = this.app.listen(this.port);
