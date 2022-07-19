@@ -1,6 +1,7 @@
 import { IUsersController } from './users/users.controller.interface';
 import { IUsersService } from './users/users.service.interface';
 import { IConfigService } from './config/config.service.interface';
+import { IUsersRepository } from './users/users.repository.interface';
 
 export const TYPES = {
 	Application: Symbol.for('Application'),
@@ -10,4 +11,5 @@ export const TYPES = {
 	ILogger: Symbol.for('ILogger'),
 	IConfigService: Symbol.for('IConfigService'),
 	PrismaService: Symbol.for('PrismaService'),
+	IUsersRepository: Symbol.for('IUsersRepository'),
 };

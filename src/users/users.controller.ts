@@ -9,31 +9,54 @@ import { IUsersController } from './users.controller.interface';
 import { UserRegisterDto } from './dto/user-register.dto';
 import { UserLoginDto } from './dto/user-login.dto';
 import { IUsersService } from './users.service.interface';
-import { User } from './user.entity';
 import { ValidateMiddleware } from '../common/validate.middleware';
+import { sign } from 'jsonwebtoken';
+import { IConfigService } from '../config/config.service.interface';
 
 @injectable()
 export class UsersController extends BaseController implements IUsersController {
 	constructor(
 		@inject(TYPES.ILogger) private loggerService: ILogger,
 		@inject(TYPES.IUsersService) private usersService: IUsersService,
+		@inject(TYPES.IConfigService) private configService: IConfigService,
 	) {
 		super(loggerService);
 
 		this.bindRoutes([
-			{ method: 'post', path: '/login', func: this.login },
+			{
+				method: 'post',
+				path: '/login',
+				func: this.login,
+				middlewares: [new ValidateMiddleware(UserLoginDto)],
+			},
 			{
 				method: 'post',
 				path: '/register',
 				func: this.register,
 				middlewares: [new ValidateMiddleware(UserRegisterDto)],
 			},
+			{
+				method: 'get',
+				path: '/info',
+				func: this.info,
+				middlewares: [],
+			},
 		]);
 	}
 
-	login(req: Request<{}, {}, UserLoginDto>, res: Response, next: NextFunction): void {
-		console.log(req.body);
-		next(new HTTPError(401, 'Error of auth'));
+	async login(
+		req: Request<{}, {}, UserLoginDto>,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		const result = await this.usersService.validateUser(req.body);
+
+		if (result) {
+			const jwt = await this.signJWT(req.body.email, this.configService.get('SECRET'));
+			this.ok(res, { jwt });
+		} else {
+			next(new HTTPError(401, 'Error of auth'));
+		}
 	}
 
 	async register(
@@ -51,6 +74,30 @@ export class UsersController extends BaseController implements IUsersController 
 			return next(new HTTPError(422, 'Such user has already exist'));
 		}
 
-		this.ok<User>(res, result);
+		this.ok(res, { name: result.name, email: result.email, id: result.id });
+	}
+
+	async info({ user }: Request, res: Response): Promise<void> {
+		this.ok(res, { email: user });
+	}
+
+	private signJWT(email: string, secret: string): Promise<string> {
+		return new Promise((resolve, reject) => {
+			sign(
+				{
+					email,
+					iat: Math.floor(Date.now() / 1000),
+				},
+				secret,
+				{ algorithm: 'HS256' },
+				(err, res) => {
+					if (err) {
+						reject(err);
+						return;
+					}
+					resolve(res as string);
+				},
+			);
+		});
 	}
 }

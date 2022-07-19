@@ -1,11 +1,19 @@
-import { hash } from 'bcryptjs';
+import { hash, compare } from 'bcryptjs';
 
 export class User {
 	private _password: string;
-	constructor(private readonly _login: string, private readonly _email: string) {}
+	constructor(
+		private readonly _name: string,
+		private readonly _email: string,
+		passwordHash?: string,
+	) {
+		if (passwordHash) {
+			this._password = passwordHash;
+		}
+	}
 
-	get login(): string {
-		return this._login;
+	get name(): string {
+		return this._name;
 	}
 
 	get email(): string {
@@ -16,7 +24,11 @@ export class User {
 		return this._password;
 	}
 
-	async setPassword(password: string, salt: number): Promise<void> {
+	public async setPassword(password: string, salt: number): Promise<void> {
 		this._password = await hash(password, salt);
+	}
+
+	public async comparePassword(password: string): Promise<boolean> {
+		return compare(password, this._password);
 	}
 }
